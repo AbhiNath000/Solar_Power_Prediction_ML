@@ -3,19 +3,36 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_squared_error, r2_score
 
-file_path = r'D:\7th SEMESTER\SIH\DATASETS\ml_filled.csv'
+file_path = r'D:\7th SEMESTER\PEDC\solarpowergeneration.csv'
 data = pd.read_csv(file_path)
 
-features = ["Year", "Month", "Product", "State"]
+features = [
+    "temperature_2_m_above_gnd",
+    "relative_humidity_2_m_above_gnd",
+    "mean_sea_level_pressure_MSL",
+    "total_precipitation_sfc",
+    "total_cloud_cover_sfc",
+    "high_cloud_cover_high_cld_lay",
+    "medium_cloud_cover_mid_cld_lay",
+    "low_cloud_cover_low_cld_lay",
+    "shortwave_radiation_backwards_sfc",
+    "wind_speed_10_m_above_gnd",
+    "wind_direction_10_m_above_gnd",
+    "wind_speed_80_m_above_gnd",
+    "wind_direction_80_m_above_gnd",
+    "wind_speed_900_mb",
+    "wind_direction_900_mb",
+    "angle_of_incidence",
+    "zenith",
+    "azimuth"
+]
 
 X = data[features]
-y = data['Requirement(in 000\'MTS)']
-
-X = pd.get_dummies(X)
+y = data['generated_power_kw']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-requirement_tree = DecisionTreeRegressor()
+power_generation_tree = DecisionTreeRegressor()
 
 param_grid = {
     'max_depth': [None, 10, 20, 30],
@@ -23,12 +40,12 @@ param_grid = {
     'min_samples_leaf': [1, 2, 4]
 }
 
-grid_search = GridSearchCV(estimator=requirement_tree, param_grid=param_grid, cv=5)
+grid_search = GridSearchCV(estimator=power_generation_tree, param_grid=param_grid, cv=5)
 grid_search.fit(X_train, y_train)
 
-best_requirement_tree = grid_search.best_estimator_
+best_power_generation_tree = grid_search.best_estimator_
 
-y_pred = best_requirement_tree.predict(X_test)
+y_pred = best_power_generation_tree.predict(X_test)
 
 mse = mean_squared_error(y_test, y_pred)
 print(f'Mean Squared Error (MSE): {mse}')
@@ -39,14 +56,12 @@ print(f'R-squared (R2) Score: {r2 * 100:.2f}%')
 def get_user_input():
     user_input = {}
     for feature in features:
-        value = input(f"Enter {feature}: ")
+        value = float(input(f"Enter {feature}: "))
         user_input[feature] = value
     return user_input
 
 new_data = pd.DataFrame([get_user_input()])
 
-new_data = pd.get_dummies(new_data.reindex(columns=X.columns, fill_value=0))
+predicted_power = best_power_generation_tree.predict(new_data)
 
-predicted_requirement = best_requirement_tree.predict(new_data)
-
-print(f"Predicted Requirement: {predicted_requirement[0]:.2f} 'MTS'")
+print(f"Predicted Power Generation: {predicted_power[0]:.2f} kW")
